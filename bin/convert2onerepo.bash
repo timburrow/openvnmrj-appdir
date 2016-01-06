@@ -287,7 +287,12 @@ fi
 #git remote add origin git@github.com:timburrow/maclib.git
 #git push -u origin --all
 #git push -u origin --tags
-~/Documents/Source/scripts/makenasrepo.bash
-
+#~/Documents/Source/scripts/makenasrepo.bash
+git remote add origin "ssh://git@github.com:OpenVnmrJ/${_DIR}.git"
+git push --set-upstream origin master
+git push nas --all
+git push nas --tags
+git remote -v
+git branch -av
 exit 0
 
