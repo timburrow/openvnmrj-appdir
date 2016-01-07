@@ -234,14 +234,17 @@ fi
 # done creating all files, now in master, add README.md and commit
   git add README.md
 if [[ -z "${gitsignkey}" ]]; then
-  git commit -m "Initial commit with all README files"
+  git commit -m "Commit with README "
 else
-  git commit -S -m "Initial commit with all README files"
+  git commit -S -m "Commit with README "
 fi
+git remote add origin "ssh://git@github.com:22/OpenVnmrJ/${_DIR}.git"
+git pull --rebase origin master
+git fetch --all
 
 gitversion=$( git --version | sed 's/.* //g' )
 gitversionA=(${gitversion//./ })
-echo "Git version array is ${versionA[@]} minor version is ${versionA[2]}"
+echo "Git version array is ${gitversionA[@]} minor version is ${gitversionA[2]}"
 gitvmajor=${gitversionA[0]}
 gitvminor=${gitversionA[1]}
 gitvincrement=${gitversionA[2]}
@@ -288,10 +291,9 @@ fi
 #git push -u origin --all
 #git push -u origin --tags
 #~/Documents/Source/scripts/makenasrepo.bash
-git remote add origin "ssh://git@github.com:OpenVnmrJ/${_DIR}.git"
 git push --set-upstream origin master
-git push nas --all
-git push nas --tags
+git push origin --all
+git push origin --tags
 git remote -v
 git branch -av
 exit 0

@@ -13,6 +13,17 @@
 #   misc: miscellaneous contributions
 set -o nounset
 set -e
+# From Stackoverflow http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
+# Get the script diectory
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
+  _SCRIPTDIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+  SOURCE="$(readlink "$SOURCE")"
+  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE" # if $SOURCE was a relative symlink, we need to resolve it relative to the path where the symlink file was located
+done
+_SCRIPTDIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+echo "Script running from ${_SCRIPTDIR}"
+
 
 dirs=( appdir bin fidlib imaging maclib psglib shapelib templates wtlib misc )
 
@@ -24,7 +35,7 @@ for dir in ${dirs[@]}; do
     continue
   }
   echo "Making a repo in ${dir}"
-  /home/timburrow/Documents/Source/scripts/convert2onerepo.bash
+  "${_SCRIPTDIR}"/convert2onerepo.bash
   cd ..
 done
 
