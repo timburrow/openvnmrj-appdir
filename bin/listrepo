@@ -195,7 +195,7 @@ if [[ -d "${repodir}" ]]; then
   fi
 # repo probably exists already, just update
   cd "${repodir}" || { echo "cd ${repodir} failed. Aborting"; exit 1; }
-  if ! [[ -d .git ]]; then
+  if [[ -d .git ]]; then
     echo "Updating repository from ${repo_url}"
     git pull origin || { badrepo "${repo_url}"; exit 1; }
     git fetch --all
@@ -205,6 +205,13 @@ if [[ -d "${repodir}" ]]; then
     else
       git checkout ${localbranch}
     fi
+  else
+# we have a directory but no repository
+    git clone ${repo_url} "${repodir}" . || { badrepo "${repo_url}"; exit 1; }
+    git remote add upstream ${upstream_repo_url}
+    git fetch --all
+    git fetch --tags
+    git checkout -b ${localbranch}
   fi
 else
   if [[ ! -d "${ovjhome}" ]]; then
@@ -219,11 +226,12 @@ else
   echo "Cloning repository from ${repo_url}"
   git clone ${repo_url} "${repodir}" || { badrepo "${repo_url}"; exit 1; }
   cd "${repodir}"
+  git remote add upstream ${upstream_repo_url}
   git fetch --all
   git fetch --tags
   git checkout -b ${localbranch}
 fi
-# at this point we have a repo in "${repodir}"
+# at this point we have a repo in "${repodir}" and on the correct branch
 tags=$(git tag -l)
 
 underline="====================================================================="
