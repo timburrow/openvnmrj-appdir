@@ -239,6 +239,9 @@ if [[ -z "${gitsignkey}" ]]; then
 else
   git commit -S -m "Initial commit with README"
 fi
+git remote add origin "ssh://git@github.com:22/OpenVnmrJ/${_DIR}.git"
+git pull --rebase origin master
+git fetch --all
 
 gitversion=$( git --version | sed 's/.* //g' )
 gitversionA=(${gitversion//./ })
@@ -281,7 +284,12 @@ fi
 #git remote add origin git@github.com:timburrow/maclib.git
 #git push -u origin --all
 #git push -u origin --tags
-~/Documents/Source/scripts/makenasrepo.bash
+#~/Documents/Source/scripts/makenasrepo.bash
+git push --set-upstream origin master
+git push origin --all
+git push origin --tags
+git remote -v
+git branch -a
 
 exit 0
 
