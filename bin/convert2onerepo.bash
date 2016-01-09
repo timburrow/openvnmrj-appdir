@@ -21,6 +21,9 @@
 # function that returns the description from a file passed as $1
 set -o nounset
 #set -e
+
+localrepo=1
+
 function _description {
   local tdescription
 gobble=0
@@ -194,7 +197,7 @@ In most cases, use extract to install the contribution:
 EOF1
 # Clean up address, phone, etc
   cat "${archivename}.tmp" | grep -i -v "Address:"| grep -i -v "Phone:" | grep -i -v "FAX:" | \
-  grep -i -v "Company/University:" | grep -i -v "email" | grep -i -v "e-mail"> "${gitdir}"/"${archivename}.README"
+  grep -i -v "Company/University:" | grep -i -v "email" | grep -i -v "e-mail"> "${gitdir}"/"${archivename}.md"
   rm "${archivename}.tmp"
   copyright-header --add-path "${gitdir}"/"${archivename}.README" \
   --syntax "${READMEYML}" --license ASL2 --copyright-holder "University of Oregon" --copyright-software "${archivename}" \
@@ -239,9 +242,12 @@ if [[ -z "${gitsignkey}" ]]; then
 else
   git commit -S -m "Initial commit with README"
 fi
-git remote add origin "ssh://git@github.com:22/OpenVnmrJ/${_DIR}.git"
-git pull --rebase origin master
-git fetch --all
+
+if (( localrepo == 0 )); then
+  git remote add origin "ssh://git@github.com:22/OpenVnmrJ/${_DIR}.git"
+  git pull --rebase origin master
+  git fetch --all
+fi
 
 gitversion=$( git --version | sed 's/.* //g' )
 gitversionA=(${gitversion//./ })
@@ -269,8 +275,10 @@ for archivename in ${contriblist[@]}; do
 # TEB: add files so changes can be tracked in git
   git checkout ${gitcheckout} "${archivename}"
   tar zxf "${_PATH}"/"${archivename}".tar.Z
+  cp "${archivename}".md "${archivename}".README
   files=$(tar ztf "${_PATH}"/"${archivename}".tar.Z)
   git add ${files[@]}
+  git add "${archivename}".md
   if [[ -z "${gitsignkey}" ]]; then
     git commit -m "${archivename} v1.0 " -m "${description}"
     git tag -a "${archivename}${_TAG}" -m "${description}" 
@@ -281,15 +289,17 @@ for archivename in ${contriblist[@]}; do
   git checkout master
 done
 fi
+if (( localrepo == 1 )); then
 #git remote add origin git@github.com:timburrow/maclib.git
 #git push -u origin --all
 #git push -u origin --tags
-#~/Documents/Source/scripts/makenasrepo.bash
-git push --set-upstream origin master
-git push origin --all
-git push origin --tags
-git remote -v
-git branch -a
-
+  "${_SCRIPTDIR}"/makenasrepo.bash
+else
+  git push --set-upstream origin master
+  git push origin --all
+  git push origin --tags
+  git remote -v
+  git branch -a -v
+fi
 exit 0
 
