@@ -22,7 +22,7 @@
 set -o nounset
 #set -e
 
-localrepo=1
+localrepo=0
 
 function _description {
   local tdescription
@@ -146,29 +146,30 @@ _TAG=-v1.0
 # sign commits and branches if possible
 gitsignkey=$(git config --global --get user.signingkey)
 git init
-makereadme "${_DIR}" "${gitdir}"
+makereadme "${_DIR}" README.md
 
 # First pass; make top level READMEs and extract all files
 contriblist=()
-cd "${_PATH}"
-for archive in *.tar.Z; do
-  echo ": ${archive}"
+#cd "${_PATH}"
+for archive in "${_PATH}"/*.tar.Z; do
+  echo "*** Pass 1: ${archive}"
   archivename=`basename ${archive} .tar.Z`
 # check if Agilent contribution
   agilent=""
   varian=""
-  agilent=$(grep -i submitter "${archivename}.README"| grep -i "varian\|agilent")
-  yourname=$(grep -i "your name" "${archivename}.README"| grep -i "varian\|agilent")
-  varian=$(grep -i company "${archivename}.README"| grep -i "varian\|agilent")
+  agilent=$(grep -i submitter "${_PATH}"/"${archivename}.README"| grep -i "varian\|agilent")
+  yourname=$(grep -i "your name" "${_PATH}"/"${archivename}.README"| grep -i "varian\|agilent")
+  varian=$(grep -i company "${_PATH}"/"${archivename}.README"| grep -i "varian\|agilent")
   if [[ -z ${agilent} && -z ${varian} && -z ${yourname} ]]; then
     echo "#### Skipping non-Agilent ${archivename}"
-    grep -i "submitter\|company" "${archivename}.README"
+    grep -i "submitter\|company" "${_PATH}"/"${archivename}.README"
     continue
   fi
   contriblist+=(${archivename})
   description=""
-  _description "${archivename}.README"
-  tail -n +5 "${archivename}.README" | head -n -11 - > "${archivename}.tmp"
+  echo "Look at README: ${_PATH}/${archivename}.README"
+  _description "${_PATH}"/"${archivename}.README"
+  tail -n +5 "${_PATH}"/"${archivename}.README" | head -n -11 - > "${archivename}.tmp"
   # this is archivename.README, not markdown 
   cat >> "${archivename}.tmp" <<-EOF1
 
@@ -197,30 +198,30 @@ In most cases, use extract to install the contribution:
 EOF1
 # Clean up address, phone, etc
   cat "${archivename}.tmp" | grep -i -v "Address:"| grep -i -v "Phone:" | grep -i -v "FAX:" | \
-  grep -i -v "Company/University:" | grep -i -v "email" | grep -i -v "e-mail"> "${gitdir}"/"${archivename}.md"
+  grep -i -v "Company/University:" | grep -i -v "email" | grep -i -v "e-mail"> "${archivename}.README"
   rm "${archivename}.tmp"
-  copyright-header --add-path "${gitdir}"/"${archivename}.README" \
+  copyright-header --add-path "${archivename}.README" \
   --syntax "${READMEYML}" --license ASL2 --copyright-holder "University of Oregon" --copyright-software "${archivename}" \
   --output-dir . \
   --copyright-software-description "${description}" \
   --word-wrap 75 --copyright-year 2016
 
 # This is in markdown
-  cat  >> "${gitdir}"/README.md <<-EOF2
+  cat  >> README.md <<-EOF2
 ##${archivename} 
 >${description}
 
 ---
 To install the contribution, checkout the tag ${archivename}${_TAG}:  
-```
+
     git checkout ${archivename}${_TAG}  
-```
+
 then read ${archivename}.README   
 
 Usually use extract to install the contribution:  
-```
+
     extract ${_DIR}/${archivename}
-```
+
 EOF2
 
 done
@@ -251,7 +252,7 @@ fi
 
 gitversion=$( git --version | sed 's/.* //g' )
 gitversionA=(${gitversion//./ })
-echo "Git version array is ${versionA[@]} minor version is ${versionA[2]}"
+echo "Git version array is ${gitversionA[@]} minor version is ${gitversionA[2]}"
 gitvmajor=${gitversionA[0]}
 gitvminor=${gitversionA[1]}
 gitvincrement=${gitversionA[2]}
@@ -266,19 +267,23 @@ fi
 # Second pass; adding all branches and tags
 if [[ ! -z ${contriblist:-} ]]; then
 echo "All files: ${contriblist[@]}"
-cd "${_PATH}"/"${gitdir}"
+#cd "${_PATH}"/"${gitdir}"
 for archivename in ${contriblist[@]}; do
-  echo "> ${archivename}"
+  echo "*** Pass 2: ${archivename}"
 #  archivename=`basename ${archive} .tar.Z`
   description=""
-  _description "${_PATH}"/"${archivename}.README"
+  _description "${archivename}.md"
 # TEB: add files so changes can be tracked in git
   git checkout ${gitcheckout} "${archivename}"
+  cp "${archivename}".README README.md
+  mv "${archivename}".README "${archivename}".tmp
   tar zxf "${_PATH}"/"${archivename}".tar.Z
-  cp "${archivename}".md "${archivename}".README
+  mv "${archivename}".tmp "${archivename}".README
   files=$(tar ztf "${_PATH}"/"${archivename}".tar.Z)
   git add ${files[@]}
-  git add "${archivename}".md
+  git add "${archivename}".README
+  git add README.md
+  git status
   if [[ -z "${gitsignkey}" ]]; then
     git commit -m "${archivename} v1.0 " -m "${description}"
     git tag -a "${archivename}${_TAG}" -m "${description}" 
