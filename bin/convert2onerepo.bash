@@ -173,7 +173,7 @@ for archive in "${_PATH}"/*.tar.Z; do
   # this is archivename.README, not markdown 
   cat >> "${archivename}.tmp" <<-EOF1
 
-** This software has not been tested on OpenVnmrJ. Use at your own risk. **
+**This software has not been tested on OpenVnmrJ. Use at your own risk.**
 
 To install this user contribution:  
 Download the repository from GitHub and checkout the tag of the contribution you want.
@@ -184,14 +184,14 @@ Typically tags end in the version (e.g. ${_TAG})
      git checkout ${archivename}${_TAG}
 
 
-You may also make a new branch and cherry-pick the multiple tags:  
+You may also download the archive directly from github at
 
-     git checkout -b mybranch
-     git cherry-pick  ${archivename}${_TAG}
+    https://github.com/OpenVnmrJ/maclib/archive/${archivename}${_TAG}.zip
 
-then read ${archivename}.README   
+Read ${archivename}.README for installation instructions.
 
-In most cases, use extract to install the contribution:  
+In most cases, move the contribution to /vnmr/userlib/${_DIR} 
+then use extract to install the contribution:  
 
     extract ${_DIR}/${archivename}
 
@@ -236,8 +236,10 @@ if [[ ! -z "${TEMPREADMEYML:-}" ]]; then
   rm "${TEMPREADMEYML}"
 fi
 
+cp "${_SCRIPTDIR}"/../LICENSE .
 # done creating all files, now in master, add README.md and commit
   git add README.md
+  git add LICENSE
 if [[ -z "${gitsignkey}" ]]; then
   git commit -m "Initial commit with README"
 else
@@ -272,10 +274,10 @@ for archivename in ${contriblist[@]}; do
   echo "*** Pass 2: ${archivename}"
 #  archivename=`basename ${archive} .tar.Z`
   description=""
-  _description "${archivename}.md"
+  _description "${archivename}.README"
 # TEB: add files so changes can be tracked in git
   git checkout ${gitcheckout} "${archivename}"
-  cp "${archivename}".README README.md
+  echo -n "# ${archivename}$(sed 's/^#//' ${archivename}.README)" >  README.md
   mv "${archivename}".README "${archivename}".tmp
   tar zxf "${_PATH}"/"${archivename}".tar.Z
   mv "${archivename}".tmp "${archivename}".README
@@ -295,9 +297,6 @@ for archivename in ${contriblist[@]}; do
 done
 fi
 if (( localrepo == 1 )); then
-#git remote add origin git@github.com:timburrow/maclib.git
-#git push -u origin --all
-#git push -u origin --tags
   "${_SCRIPTDIR}"/makenasrepo.bash
 else
   git push --set-upstream origin master
