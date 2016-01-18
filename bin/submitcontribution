@@ -31,17 +31,17 @@ or     `basename $0` -h
 
 OPTIONS
 =======
-    -r|--repo
+    -r
       Repository to use, if not specified, uses maclib 
-    -n|--name
+    -n
       Name of contribution e.g. bcdc *required*
-    -p|--path
+    -p
       Path to directory containing contribution *required*
-    -u|--github-user)
+    -u
       Github user name, *required*
-    -v|--version)
-      Version of software. e.g. 1.0 or 0.9. 1.0 is default
-    -h|--help)
+    -t
+      tag for version of software. e.g. 1.0 or 0.9. 1.0 is default
+    -h
       Show this help and exits
     -H|--https)
       Use https URL. The default is ssh.
@@ -157,39 +157,43 @@ else
   ovjhome=~/vnmrsys/openvnmrj
 fi
 
-ARGLIST=$(getopt -o r:n:p:u:v:hH \
-          --long repo:,name:,path:,github-user:,version:,help,https \
-          -- "$@")
-
 if [[ $? != 0 ]] ; then showhelp; exit 1 ; fi
 
-eval set -- "${ARGLIST}"
+while getopts “r:n:p:u:v:hH” option; do
 
-while true ; do
   case "$1" in
-    -r|--repo)
+    r)
       # repository to use, if not specified, uses maclib 
-      repo="${2}";  shift 2 ;;
-    -n|--name)
+      repo=${OPTARG}
+      ;;
+    n)
       #  Name of contribution e.g. bcdc *required*
-      name="${2}";  shift 2 ;;
-    -p|--path)
+      name=${OPTARG}
+      ;;
+    p)
       #  path to directory containing contribution *required*
-      dirpath="${2}";  shift 2 ;;
-    -u|--github-user)
+      dirpath=${OPTARG}
+      ;;
+    u)
       # github user name, *required*
-      githubuser="${2}";  shift 2 ;;
-    -v|--version)
-      # version of software. e.g. 1.0 or 0.9. 1.0 is default
-      version="${2}";  shift 2 ;;
-    -h|--help)
+      githubuser=${OPTARG}
+      ;;
+    t)
+      # tag version of software. e.g. 1.0 or 0.9. 1.0 is default
+      version=${OPTARG}
+      ;;
+    h)
       # show this help and exits
-      showhelp;  shift; exit 0 ;;
-    -H|--https)
+      showhelp; exit 0 
+      ;;
+    H)
       # use https URL. The default is ssh.
-      useHTTPS=1;  shift ;;
-    --) shift ; break ;;
-    *) echo "Internal error!" ; exit 1 ;;
+      useHTTPS=1
+      ;;
+    /?) 
+    	echo -e "Invalid option: ${option}\n" 1>&2
+    	exit 85 
+    	;;
   esac
 done
 
