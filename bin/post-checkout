@@ -1,0 +1,41 @@
+#!/bin/bash
+# TEB 20150102 post-checkout git hook
+# install in .git/hook, make executable
+# Will make an archive of the git branch 
+# suitable for Agilent extract to install
+echo "git post-commit"
+echo ".git dir: ${GIT_DIR}"
+echo "$# $0 $1 $2 $3"
+topdir=$(git rev-parse --show-toplevel)
+echo "dir: ${topdir}"
+
+# tar or zip
+command -v ta >/dev/null 2>&1
+if [[ $? == 0 ]]; then
+  compress="tar zcf "
+  suffix=".tar.gz"
+else
+  command -v zi >/dev/null 2>&1
+  if [[ $? == 0 ]]; then
+    compress="zip -qr "
+    suffix=".zip"
+  fi  
+fi
+
+if [[ -z "${compress}" ]]; then
+  exit 1
+fi
+
+#list files from git
+gitfiles=($(git ls-tree --name-only ${2}))
+# Find the name of the contribution
+readme=$(git ls-tree --name-only ${2} | grep "\.README$")
+if [[ -z "${readme}" ]]; then
+  echo "Readme is: ${readme}"
+  echo "Files are: ${gitfiles}"
+  archivename=${readme%%\.*}
+  ${compress} ${archivename}.tar.Z ${gitfiles[@]}
+fi
+
+exit 0
+
