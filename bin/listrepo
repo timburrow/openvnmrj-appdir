@@ -29,15 +29,15 @@ or     `basename $0` -h to show this help
 
 OPTIONS
 =======
-    -r|--repo
-      repository to use, if not specified, uses maclib. See below.
-    -p|--path
+    -r
+      repository to use, if not specified, shows this help. See below.
+    -p
       path to directory for repository. Default is ~/vnmrsys/openvnmrj
-    -u|--github-user
+    -u
       github user name. Default is OpenVnmrJ. See below.
-    -H|--https
+    -H
       use https URL; default is to use ssh URL. See below.
-    -h|--help
+    -h
       show help and exit
 
 REPOSITORIES
@@ -85,6 +85,10 @@ sudo apt-get install git
 On RHEL or CentOS:
 sudo yum install git
 
+On OS X:
+Install Xcode from https://developer.apple.com
+or git from http://www.git-scm.com/
+
 then set up your git environment by setting your name and email:
 git config --global user.name "YOUR NAME"
 git config --global user.email "YOUR EMAIL ADDRESS"
@@ -120,51 +124,54 @@ else
 fi
 
 # by default clone from OpenVnmrJ, but if user forked, give them the option to clone their fork
-#githubuser="OpenVnmrJ"
-githubuser="gittim" # local debugging
+githubuser="OpenVnmrJ"
+#githubuser="gittim" # local debugging
 
 useHTTPS=0
-repo="maclib"
-
-ARGLIST=$(getopt -o r:p:u:hH \
-          --long repo:,path:,github-user:,help,https \
-          -- "$@")
+repo=
 
 if [[ $? != 0 ]] ; then showhelp; exit 1 ; fi
 
-eval set -- "${ARGLIST}"
-
-while true ; do
-  case "$1" in
-    -r|--repo)
+while getopts “hHr:u:p:v” option; do	
+  case $option in
+    r)
       # repository to use, if not specified, uses maclib 
-      repo="${2}";  shift 2 ;;
-    -p|--path)
+      repo=${OPTARG}
+      ;;
+    p)
       #  path to directory; not in help
-      ovjhome="${2}";  shift 2 ;;
-    -u|--github-user)
+      ovjhome=${OPTARG}
+      ;;
+    u)
       # github user name, expect  
-      githubuser="${2}";  shift 2 ;;
-    -h|--help)
+      githubuser=${OPTARG}
+      ;;
+    h)
       # show help
-      showhelp;  shift; exit 0 ;;
-    -H|--https)
-      # use https URL; default is to use ssh URL
-      useHTTPS=1;  shift ;;
-    --) shift ; break ;;
-    *) echo "Internal error!" ; exit 1 ;;
+			showhelp; exit 0 
+			;;
+    H)
+			# use https URL; default is to use ssh URL
+			useHTTPS=1 
+			;;
+    \?) 
+			# getopts invalid arg
+			echo -e "Invalid option: ${option}\n" 1>&2 
+			showhelp; exit 85 
+			;; 
   esac
 done
 
 repos=( appdir bin fidlib imaging maclib psglib shapelib templates wtlib misc )
 contains ${repo} "${repos[@]}" || { echo -e "Cannot find ${repo} in list\n ${repos[@]}"; showhelp ; exit 1; }
 
+
 # https repo might ask for keys if credential helper is not available
 # ssh repo needs keypairs set up
 # specify the port because git 1.7.1 is broken and doesn't accept : ??
 if (( useHTTPS == 0 )); then
-  repo_url="ssh://${githubuser}@192.168.2.28:22/volume1/git_repos/${repo}.git"
-  #repo_url="ssh://git@github.com:22/${githubuser}/${repo}.git"
+  #repo_url="ssh://${githubuser}@192.168.2.28:22/volume1/git_repos/${repo}.git"
+  repo_url="ssh://git@github.com:22/${githubuser}/${repo}.git"
   upstream_repo_url="ssh://${githubuser}@192.168.2.28:22/volume1/git_repos/${repo}.git"
 else
   repo_url="https://github.com/${githubuser}/${repo}.git"
@@ -229,7 +236,7 @@ tags=$(git tag -l)
 underline="====================================================================="
 for tag in ${tags}; do
   echo -e "\n\n${tag}"
-  echo -e "${underline:0:$(expr length ${tag})}\n"
+  echo -e "${underline:0:${#tag}}\n"
   git --no-pager log  --pretty=format:"%b" ${tag}
 done
 #for b in "`git branch`"; do echo "$b"; done | tr -d "*" | xargs gitk&
